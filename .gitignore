@@ -1,0 +1,7 @@
+HexagonMap/[Ll]ibrary/
+HexagonMap/[Tt]emp/
+HexagonMap/[Oo]bj/
+*.csproj
+*.unityproj
+*.sln
+*.userprefs
