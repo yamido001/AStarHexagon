@@ -2,63 +2,21 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MapView : SingleComponentInstance<MapView> {
+public class MapView : MapViewBase {
 
-	public SubMapView subMapViewTemplate;
-	public Camera mapCamera;
-
-	Transform mCameraCachedTransform;
-	InputWrapper mInputWrapper;
-	Dictionary<int, SubMapView> mSubMapViews = new Dictionary<int, SubMapView>();
-	GameObject mObjHightLight;
-
-	public override void Awake ()
+	public void Awake ()
 	{
-		base.Awake ();
-		mCameraCachedTransform = mapCamera.transform;
-		subMapViewTemplate.gameObject.SetActive (false);
-		mInputWrapper = new InputWrapper (OnClick, OnDrag);
-		RefreshVisiableSubMapView ();
+		DoInit ();
 	}
 
 	void Update()
 	{
-		mInputWrapper.Update ();
+		DoUpdate ();
 	}
 
-	List<int> mToRemoveBlockIdList = new List<int>();
-	/// <summary>
-	/// 刷新可见地块，当可见地块改变时调用
-	/// </summary>
-	void RefreshVisiableSubMapView()
+	void OnDestroy()
 	{
-		HashSet<int> visibleBlockSet = GetVisiableMapBlocks ();
-
-		//找到哪些子地块已经变得不可见
-		mToRemoveBlockIdList.Clear ();
-		var subMapViewEnumerator = mSubMapViews.GetEnumerator ();
-		while (subMapViewEnumerator.MoveNext ()) {
-			if (!visibleBlockSet.Contains (subMapViewEnumerator.Current.Key)) {
-				mToRemoveBlockIdList.Add (subMapViewEnumerator.Current.Key);
-			}
-		}
-
-		//不可见地块删除
-		for (int i = 0; i < mToRemoveBlockIdList.Count; ++i) {
-			int toRemoveBlockId = mToRemoveBlockIdList [i];
-			SubMapView removeSubMapView = mSubMapViews [toRemoveBlockId];
-			mSubMapViews.Remove (toRemoveBlockId);
-			RecoverSubMapView (removeSubMapView);
-		}
-
-		var visibleBlockSetEnum = visibleBlockSet.GetEnumerator ();
-		while (visibleBlockSetEnum.MoveNext ()) {
-			if (mSubMapViews.ContainsKey (visibleBlockSetEnum.Current))
-				continue;
-			SubMapView newSubMapView = CreateSubMapView ();
-			mSubMapViews.Add (visibleBlockSetEnum.Current, newSubMapView);
-			newSubMapView.SetBlockId (visibleBlockSetEnum.Current);
-		}
+		DoDestroy ();
 	}
 
 	/// <summary>
@@ -67,95 +25,108 @@ public class MapView : SingleComponentInstance<MapView> {
 	/// <param name="blockId">Block identifier.</param>
 	public void OnMapTileDataChange(IntVector2 tileCoord)
 	{
-		SubMapView subMapView = null;
-		int blockId = MapDataManager.TileCoordToBlockId (tileCoord);
-		if (mSubMapViews.TryGetValue (blockId, out subMapView)) {
-			subMapView.RefreshTile (tileCoord);
+		RefreshMapTile (tileCoord);
+	}
+
+	protected override void OnClickTile (IntVector2 clickTile)
+	{
+		base.OnClickTile (clickTile);
+		switch (mState) {
+		case FindPathState.SelectStart:
+			mFindPathStart = clickTile;
+			break;
+		case FindPathState.SelectEnd:
+			mFindPathEnd = clickTile;
+			break;
+		default:
+			break;
 		}
 	}
 
-	HashSet<int> mVisiableBlocks = new HashSet<int>();
-	/// <summary>
-	/// 获取当前可见地块
-	/// </summary>
-	/// <returns>The visiable map blocks.</returns>
-	HashSet<int> GetVisiableMapBlocks()
+
+	#region 寻路操作
+	enum FindPathState
 	{
-		mVisiableBlocks.Clear ();
-		MapLayout.Instance.GetVisiableBlock (mapCamera, mVisiableBlocks);
-		return mVisiableBlocks;
+		SelectStart,
+		SelectEnd,
+		Finding,
 	}
 
+	IntVector2 mFindPathStart = MapDataManager.InValidMapCoord;
+	IntVector2 mFindPathEnd = MapDataManager.InValidMapCoord;
+	FindPathState mState;
 
 
-	#region SubMapView的缓存
-	Queue<SubMapView> mCachedSubMapViews = new Queue<SubMapView>();
-	SubMapView CreateSubMapView()
+	void OnGUI()
 	{
-		SubMapView ret = null;
-		if (mCachedSubMapViews.Count > 0) {
-			ret = mCachedSubMapViews.Dequeue ();
-			ret.OnOutRecover ();
+		if (GUILayout.Button ("选择起点")) {
+			mState = FindPathState.SelectStart;
+		}
+		if (GUILayout.Button ("选择终点")) {
+			mState = FindPathState.SelectEnd;
+		}
+		if (MapDataManager.Instance.IsValidTileCoord (mFindPathStart.x, mFindPathStart.y) &&
+		   MapDataManager.Instance.IsValidTileCoord (mFindPathEnd.x, mFindPathEnd.y)) {
+			if (GUILayout.Button ("寻路")) {
+				mState = FindPathState.Finding;
+				List<IntVector2> findPathList = AStarManager.Instance.FindPath (mFindPathStart, mFindPathEnd);
+				if (null != findPathList) {
+					System.Text.StringBuilder pathSb = new System.Text.StringBuilder ();
+					for (int i = 0; i < findPathList.Count; ++i) {
+						pathSb.Append (findPathList [i].ToString ());
+						if (i != findPathList.Count - 1)
+							pathSb.Append ("->");
+					}
+					ShowPath (findPathList);
+				} else {
+					Debug.LogError ("未找到从 " + mFindPathStart.ToString() + " 到 " + mFindPathEnd.ToString() + " 的路径");
+				}
+			}
+		}
+	}
+
+	List<GameObject> mCurPathNodeList = new List<GameObject>();
+	void ShowPath(List<IntVector2> path)
+	{
+		for (int i = 0; i < mCurPathNodeList.Count; ++i) {
+			RecyclePathNode (mCurPathNodeList [i]);
+		}
+		mCurPathNodeList.Clear ();
+
+		for (int i = 0; i < path.Count; ++i) {
+			IntVector2 curCoord = path [i];
+			GameObject pathNode = CreatePathNode ();
+			pathNode.transform.position = MapLayout.Instance.GetTilePos (curCoord.x, curCoord.y);
+			mCurPathNodeList.Add (pathNode);
+		}
+
+		for (int i = 0; i < mCurPathNodeList.Count; ++i) {
+			if (i == mCurPathNodeList.Count - 1)
+				continue;
+			GameObject curNode = mCurPathNodeList [i];
+			GameObject nextNode = mCurPathNodeList [i + 1];
+			curNode.transform.LookAt (nextNode.transform.position);
+		}
+	}
+
+	Queue<GameObject> mPathNodeCached = new Queue<GameObject>();
+	GameObject CreatePathNode()
+	{
+		GameObject ret = null;
+		if (mPathNodeCached.Count > 0) {
+			ret = mPathNodeCached.Dequeue ();
 		} else {
-			ret = GameObject.Instantiate<SubMapView>(subMapViewTemplate);
-			ret.OnInit ();
-			ret.transform.SetParent (transform);
+			GameObject prefabObj = Resources.Load<GameObject> ("Map/Prefab/FindPath/PathNode");
+			ret = GameObject.Instantiate (prefabObj);
 		}
-		ret.gameObject.SetActive (true);
+		ret.SetActive (true);
 		return ret;
 	}
 
-	void RecoverSubMapView(SubMapView subMapView)
+	void RecyclePathNode(GameObject node)
 	{
-		subMapView.OnEnterRecover ();
-		subMapView.gameObject.SetActive (false);
-		mCachedSubMapViews.Enqueue (subMapView);
-	}
-	#endregion
-
-	#region 输入操作
-	void OnClick(Vector2 clickPos)
-	{
-		IntVector2 clickTile = MapLayout.Instance.ScreenPosToMapCoord(mapCamera, clickPos);
-		OnClickTile (clickTile);
-	}
-
-	void OnDrag(Vector2 curPos, Vector2 deltaPos)
-	{
-		Vector3 curHitPos = MapLayout.Instance.ScreenPosToMapPos(mapCamera, curPos);
-		Vector3 lastHitPos = MapLayout.Instance.ScreenPosToMapPos(mapCamera, curPos - deltaPos);
-		MoveCameraOffset (lastHitPos - curHitPos);
-	}
-	#endregion
-
-	#region 摄像机操作
-	void MoveCameraOffset(Vector3 offsetPos)
-	{
-		mCameraCachedTransform.position += offsetPos;
-		OnCameraMove ();
-	}
-
-	void MoveToCamera(Vector3 pos)
-	{
-		mCameraCachedTransform.position = pos;
-		OnCameraMove ();
-	}
-
-	void OnCameraMove()
-	{
-		RefreshVisiableSubMapView ();
-	}
-	#endregion
-
-	#region 地图点击
-	void OnClickTile(IntVector2 clickTile)
-	{
-		if (null == mObjHightLight) {
-			mObjHightLight = GameObject.Instantiate(Resources.Load<GameObject> ("Map/Prefab/MapHightLight"));
-			mObjHightLight.transform.SetParent (transform);
-			mObjHightLight.transform.Reset ();
-		}
-		mObjHightLight.transform.position = MapLayout.Instance.GetTilePos (clickTile.x, clickTile.y);
+		node.SetActive (false);
+		mPathNodeCached.Enqueue (node);
 	}
 	#endregion
 }

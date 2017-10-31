@@ -16,7 +16,7 @@ public class SingleInstance<T> where T : class, new() {
 		}
 	}
 
-	public static void ClearInstance()
+	protected static void ClearInstance()
 	{
 		mInstance = null;
 	}

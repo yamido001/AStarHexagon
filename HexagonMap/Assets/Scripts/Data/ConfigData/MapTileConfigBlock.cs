@@ -4,28 +4,36 @@ using UnityEngine;
 
 public class MapTileConfigBlock : MapTileConfigBase {
 
-	public int mBgIndex;	//占用4bit
+	protected int mModelKey = MapPrefabDefine.emptyBlockModelKey;	//占用4bit
+
+	public override MapTileConfigType tileType {
+		get {
+			return MapTileConfigType.Block;
+		}
+	}
 
 	public override void Decode (int data)
 	{
 		base.Decode (data);
-		mBgIndex = ((data & 0xF0) >> 4);
+		mModelKey = ((data & 0xF0) >> 4);
 	}
 
 	public override int Encode ()
 	{
 		int ret = base.Encode ();
-		ret |= (mBgIndex << 6);
+		ret |= ((mModelKey << 4) & 0xF0);
 		return ret;
 	}
 
-	public void SetBgIndex(int index)
+	#if UNITY_EDITOR
+	public void SetModelkey(int key)
 	{
-		mBgIndex = index;
+		mModelKey = key;
 	}
+	#endif
 
-	public int GetBgIndex()
+	public int GetModelKey()
 	{
-		return mBgIndex;
+		return mModelKey;
 	}
 }

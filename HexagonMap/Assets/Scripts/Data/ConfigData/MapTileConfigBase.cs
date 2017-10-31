@@ -4,12 +4,15 @@ using UnityEngine;
 
 public abstract class MapTileConfigBase {
 
-	public MapTileConfigType tileType;	//占用4bit
+	public IntVector2 tileCoord;
 
+	public abstract MapTileConfigType tileType {
+		get;
+	}
 
 	public virtual void Decode(int data)
 	{
-		tileType = DecodeTileType (data);
+		
 	}
 
 	public virtual int Encode()

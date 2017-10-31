@@ -4,8 +4,11 @@ using UnityEngine;
 
 public class MapDataManager : SingleInstance<MapDataManager>{
 
+	public static IntVector2 InValidMapCoord = new IntVector2 (-1, -1);
+
 	int[,] mTileConfigDatas = new int[MapConst.MapSize.x,MapConst.MapSize.y];
 	Dictionary<int, MapTileDynamicBase> mDynamicDataDic = new Dictionary<int, MapTileDynamicBase>();
+	const string mapDataPath = "Map/Config/mapData";
 
 	public MapDataManager()
 	{
@@ -14,31 +17,25 @@ public class MapDataManager : SingleInstance<MapDataManager>{
 
 	public void LoadConfigData()
 	{
-		for (int i = 0; i < mTileConfigDatas.Rank; ++i) {
-			for (int j = 0; j < mTileConfigDatas.GetLength (i); ++j) {
+		TextAsset mapAsset = Resources.Load<TextAsset> (mapDataPath);
+		if (null != 	mapAsset) {
+			byte[] mapBytes = mapAsset.bytes;
 
-				int value = Random.Range (0, 1);
-				if (value == 0) {
-					MapTileConfigBlock block = new MapTileConfigBlock ();
-					block.tileType = MapTileConfigType.Block;
-					block.SetBgIndex(Random.Range(0, 2));
-					mTileConfigDatas [i, j] = block.Encode ();
-				} else {
-					MapTileConfigFree freeTile = new MapTileConfigFree ();
-					freeTile.tileType = MapTileConfigType.Free;
-					freeTile.SetBgIndex(Random.Range(0, 2));
-					mTileConfigDatas [i, j] = freeTile.Encode ();
+			for (int i = 0; i < mTileConfigDatas.GetLength(0); ++i) {
+				for (int j = 0; j < mTileConfigDatas.GetLength (1); ++j) {
+					mTileConfigDatas[i,j] = ReadIntFromByte (mapBytes, (i * mTileConfigDatas.GetLength (1) + j) * 4);
 				}
 			}
 		}
+
 		RandomDynamicData ();
 	}
 
 	public void RandomDynamicData()
 	{
 		mDynamicDataDic.Clear ();
-		for (int i = 0; i < mTileConfigDatas.Rank; ++i) {
-			for (int j = 0; j < mTileConfigDatas.GetLength (i); ++j) {
+		for (int i = 0; i < mTileConfigDatas.GetLength(0); ++i) {
+			for (int j = 0; j < mTileConfigDatas.GetLength (1); ++j) {
 				MapTileConfigType tileType = MapTileConfigBase.DecodeTileType (mTileConfigDatas [i, j]);
 				if (tileType == MapTileConfigType.Free) {
 					int value = Random.Range (0, 1);
@@ -52,6 +49,45 @@ public class MapDataManager : SingleInstance<MapDataManager>{
 				}
 			}
 		}
+	}
+
+	#if UNITY_EDITOR
+	public void SeedConfigData(int x, int y, int value)
+	{
+		mTileConfigDatas [x, y] = value;
+	}
+
+	public void SaveConfigData()
+	{
+		int width = mTileConfigDatas.GetLength (0);
+		int height = mTileConfigDatas.GetLength (1);
+		byte[] saveBytes = new byte[width * height * 4];
+		for (int i = 0; i < width; ++i) {
+			for (int j = 0; j < height; ++j) {
+				WriteIntToByte (mTileConfigDatas [i, j], saveBytes, (i * height + j) * 4);
+			}
+		}
+		System.IO.File.WriteAllBytes (System.IO.Path.Combine (Application.dataPath, "Resources/" + mapDataPath + ".bytes"), saveBytes);
+		UnityEditor.AssetDatabase.Refresh ();
+	}
+
+	void WriteIntToByte(int value, byte[] bytes, int index)
+	{
+		bytes [index] 	  = (byte)((value & 0xFF000000) >> 24);
+		bytes [index + 1] = (byte)((value & 0x00FF0000) >> 16);
+		bytes [index + 2] = (byte)((value & 0x0000FF00) >> 8);
+		bytes [index + 3] = (byte)((value & 0x000000FF));
+	}
+	#endif
+
+	int ReadIntFromByte(byte[] bytes, int index)
+	{
+		int ret = 0;
+		ret |= bytes [index] >> 24;
+		ret |= bytes [index + 1] >> 16;
+		ret |= bytes [index + 2] >> 8;
+		ret |= bytes [index + 3];
+		return ret;
 	}
 
 	public MapTileConfigBase GetTileConfig(int x, int y)
@@ -71,6 +107,7 @@ public class MapDataManager : SingleInstance<MapDataManager>{
 		default:
 			break;
 		}
+		ret.tileCoord = new IntVector2 (x, y);
 		ret.Decode (tileData);
 		return ret;
 	}
@@ -81,6 +118,15 @@ public class MapDataManager : SingleInstance<MapDataManager>{
 		MapTileDynamicBase ret = null;
 		mDynamicDataDic.TryGetValue (tileKey, out ret);
 		return ret;
+	}
+
+	public bool IsBlock(int x, int y)
+	{
+		if (!IsValidTileCoord (x, y))
+			return true;
+		int tileData = mTileConfigDatas [x, y];
+		MapTileConfigType tileType = MapTileConfigBase.DecodeTileType (tileData);
+		return tileType == MapTileConfigType.Block;
 	}
 
 	public bool IsValidTileCoord(int x, int y)

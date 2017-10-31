@@ -6,6 +6,12 @@ public class MapTileConfigFree : MapTileConfigBase {
 
 	int mBgIndex;	//占用4bit
 
+	public override MapTileConfigType tileType {
+		get {
+			return MapTileConfigType.Free;
+		}
+	}
+
 	public override void Decode (int data)
 	{
 		base.Decode (data);

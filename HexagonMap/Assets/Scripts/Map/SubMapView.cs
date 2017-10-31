@@ -9,13 +9,14 @@ public class SubMapView : MonoBehaviour {
 	IntVector2 mZeroCoord;
 	Terrain mTerrain;
 	MeshFilter mGridMeshFilter;
+	Transform mCacheTransform;
 
 	/// <summary>
 	/// 初始化
 	/// </summary>
 	public void OnInit()
 	{
-		
+		mCacheTransform = transform;
 	}
 
 	/// <summary>
@@ -66,14 +67,15 @@ public class SubMapView : MonoBehaviour {
 	#region 地图上的点
 	public void RefreshTile(IntVector2 tileCoord)
 	{
-		
+		DestroyTile (tileCoord.x, tileCoord.y);
+		InitTile(tileCoord.x, tileCoord.y);
 	}
 
 	void DestroyTiles()
 	{
 		var tileDicEnumerator = mTileDic.GetEnumerator ();
 		while (tileDicEnumerator.MoveNext ()) {
-			tileDicEnumerator.Current.Value.Destroy ();
+			tileDicEnumerator.Current.Value.Destory ();
 		}
 		mTileDic.Clear ();
 	}
@@ -82,29 +84,49 @@ public class SubMapView : MonoBehaviour {
 	{
 		for (int i = 0; i < MapConst.MapBlockSize.x + mZeroCoord.x; ++i) {
 			for (int j = 0; j < MapConst.MapBlockSize.y + mZeroCoord.y; ++j) {
-				MapTileConfigBase configBase = MapDataManager.Instance.GetTileConfig (i, j);
-				switch (configBase.tileType) {
-				case MapTileConfigType.Block:
-					break;
-				case MapTileConfigType.Free:
-					{
-						MapTileDynamicBase dynamicData = MapDataManager.Instance.GetTileDynamicData (i, j);
-						if (null != dynamicData) {
-							switch (dynamicData.TileType) {
-							case MapTileDynamicType.City:
-								break;
-							case MapTileDynamicType.Tribe:
-								break;
-							default:
-								break;
-							}
-						}
+				InitTile (i, j);
+			}
+		}
+	}
+
+	void InitTile(int x, int y)
+	{
+		MapTileConfigBase configBase = MapDataManager.Instance.GetTileConfig (x, y);
+		int tileKey = MapDataManager.TileCoordToTileKey (x, y);
+		switch (configBase.tileType) {
+		case MapTileConfigType.Block:
+			MapTileBlock tileBlock = new MapTileBlock (mCacheTransform);
+			mTileDic.Add (tileKey, tileBlock);
+			tileBlock.SetConfigData (configBase);
+			tileBlock.Refresh ();
+			break;
+		case MapTileConfigType.Free:
+			{
+				MapTileDynamicBase dynamicData = MapDataManager.Instance.GetTileDynamicData (x, y);
+				if (null != dynamicData) {
+					switch (dynamicData.TileType) {
+					case MapTileDynamicType.City:
+						break;
+					case MapTileDynamicType.Tribe:
+						break;
+					default:
+						break;
 					}
-					break;
-				default:
-					break;
 				}
 			}
+			break;
+		default:
+			break;
+		}
+	}
+
+	void DestroyTile(int x, int y)
+	{
+		int tileKey = MapDataManager.TileCoordToTileKey (x, y);
+		MapTileBase tile;
+		if (mTileDic.TryGetValue (tileKey, out tile)) {
+			tile.Destory ();
+			mTileDic.Remove (tileKey);
 		}
 	}
 	#endregion

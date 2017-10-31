@@ -9,11 +9,11 @@ public class SingleComponentInstance<T> : MonoBehaviour where T : Component{
 		private set;
 	}
 
-	public virtual void Awake(){
+	public virtual void DoInit(){
 		Instance = this as T;
 	}
 
-	public virtual void OnDestroy(){
+	public virtual void DoDestroy(){
 		Instance = null;
 	}
 }

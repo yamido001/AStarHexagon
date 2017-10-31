@@ -4,18 +4,26 @@ using UnityEngine;
 
 public abstract class MapTileBase{
 
-	public void Init()
+	protected MapTileConfigBase mConfigData;
+	protected Transform mViewTf;
+
+	public MapTileBase(Transform viewTf)
 	{
-		
+		mViewTf = viewTf;
+		OnInit ();
 	}
 
-	public void Refresh()
+	public void SetConfigData(MapTileConfigBase configData)
 	{
-		
+		mConfigData = configData;
 	}
 
-	public void Destroy()
+	public void Destory()
 	{
-		
+		OnDestroy ();
 	}
+
+	protected abstract void OnInit ();
+
+	protected abstract void OnDestroy();
 }

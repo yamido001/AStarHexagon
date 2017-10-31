@@ -9,7 +9,7 @@ public class TerrainSlicing : Editor
 	public static string TerrainPrefabSavePath = "Assets/Resources/Map/Prefab/Terrain/";
 
 	//开始分割地形
-	[MenuItem("工具/地形切割")]
+	[MenuItem("编辑器/地形切割")]
 	private static void Slicing()
 	{
 		Terrain terrain = GameObject.FindObjectOfType<Terrain>();

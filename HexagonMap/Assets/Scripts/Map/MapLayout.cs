@@ -9,6 +9,11 @@ public class MapLayout : SingleInstance<MapLayout>{
 		InitBlockGridMeshInfo ();
 	}
 
+	~MapLayout()
+	{
+		MapLayout.ClearInstance ();
+	}
+
 	//参考资料：http://www.redblobgames.com/grids/hexagons/#line-drawing
 	//顶点顺序如下，下面这个是(0,0)点的坐标，（0，0）
 	//		地图左边缘||  	  1
@@ -33,7 +38,7 @@ public class MapLayout : SingleInstance<MapLayout>{
 	//		(0,0)(1,0)
 	//
 
-	const float sqrt3 = 1.732050807568877f;
+	public const float sqrt3 = 1.732050807568877f;
 	float mHorizonalSizeHalf = sqrt3 / 2f * MapConst.MapHexagonRadius;
 	float mVerticalVerticalCenterPosDistant = MapConst.MapHexagonRadius * 3 / 2f;
 
@@ -163,9 +168,121 @@ public class MapLayout : SingleInstance<MapLayout>{
 		}
 	}
 
+	#region 方向相关
+	public enum MapDirection
+	{
+		Left,
+		Right,
+		LeftTop,
+		LeftBottom,
+		RightTop,
+		RightBottom,
+	}
+
+	public int GetNextCoordList(IntVector2 coord, IntVector2[] fillArray)
+	{
+		int curIndex = 0;
+		IntVector2 leftCoord = GetMoveDirectionCoord (coord, MapDirection.Left);
+		if (MapDataManager.Instance.IsValidTileCoord (leftCoord.x, leftCoord.y))
+			fillArray[curIndex++] = leftCoord;
+
+		IntVector2 rightCoord = GetMoveDirectionCoord (coord, MapDirection.Right);
+		if (MapDataManager.Instance.IsValidTileCoord (rightCoord.x, rightCoord.y))
+			fillArray[curIndex++] = rightCoord;
+
+		IntVector2 leftTopCoord = GetMoveDirectionCoord (coord, MapDirection.LeftTop);
+		if (MapDataManager.Instance.IsValidTileCoord (leftTopCoord.x, leftTopCoord.y))
+			fillArray[curIndex++] = leftTopCoord;
+
+		IntVector2 leftBottomCoord = GetMoveDirectionCoord (coord, MapDirection.LeftBottom);
+		if (MapDataManager.Instance.IsValidTileCoord (leftBottomCoord.x, leftBottomCoord.y))
+			fillArray[curIndex++] = leftBottomCoord;
+
+		IntVector2 rightTopCoord = GetMoveDirectionCoord (coord, MapDirection.RightTop);
+		if (MapDataManager.Instance.IsValidTileCoord (rightTopCoord.x, rightTopCoord.y))
+			fillArray[curIndex++] = rightTopCoord;
+
+		IntVector2 rightBottomCoord = GetMoveDirectionCoord (coord, MapDirection.RightBottom);
+		if (MapDataManager.Instance.IsValidTileCoord (rightBottomCoord.x, rightBottomCoord.y))
+			fillArray[curIndex++] = rightBottomCoord;
+		return curIndex;
+	}
+
+	public List<IntVector2> GetNextCoordList(IntVector2 coord, List<IntVector2> fillList = null)
+	{
+		List<IntVector2> ret = fillList;
+		if (null == ret)
+			ret = new List<IntVector2> ();
+		IntVector2 leftCoord = GetMoveDirectionCoord (coord, MapDirection.Left);
+		if (MapDataManager.Instance.IsValidTileCoord (leftCoord.x, leftCoord.y))
+			ret.Add (leftCoord);
+
+		IntVector2 rightCoord = GetMoveDirectionCoord (coord, MapDirection.Left);
+		if (MapDataManager.Instance.IsValidTileCoord (rightCoord.x, rightCoord.y))
+			ret.Add (rightCoord);
+
+		IntVector2 leftTopCoord = GetMoveDirectionCoord (coord, MapDirection.Left);
+		if (MapDataManager.Instance.IsValidTileCoord (leftTopCoord.x, leftTopCoord.y))
+			ret.Add (leftTopCoord);
+
+		IntVector2 leftBottomCoord = GetMoveDirectionCoord (coord, MapDirection.Left);
+		if (MapDataManager.Instance.IsValidTileCoord (leftBottomCoord.x, leftBottomCoord.y))
+			ret.Add (leftBottomCoord);
+
+		IntVector2 rightTopCoord = GetMoveDirectionCoord (coord, MapDirection.Left);
+		if (MapDataManager.Instance.IsValidTileCoord (rightTopCoord.x, rightTopCoord.y))
+			ret.Add (rightTopCoord);
+
+		IntVector2 rightBottomCoord = GetMoveDirectionCoord (coord, MapDirection.Left);
+		if (MapDataManager.Instance.IsValidTileCoord (rightBottomCoord.x, rightBottomCoord.y))
+			ret.Add (rightBottomCoord);
+
+		return ret;
+	}
+
+	public IntVector2 GetMoveDirectionCoord(IntVector2 coord, MapDirection dir)
+	{
+		IntVector2 ret = coord;
+		bool isEvenRow = (coord.y & 0x1) == 1;
+		switch (dir) {
+		case MapDirection.Left:
+			ret.x -= 1;
+			break;
+		case MapDirection.Right:
+			ret.x += 1;
+			break;
+		case MapDirection.LeftTop:
+			ret.y += 1;
+			if (isEvenRow)
+				ret.x -= 1;
+			break;
+		case MapDirection.LeftBottom:
+			ret.y -= 1;
+			if (isEvenRow)
+				ret.x -= 1;
+			break;
+		case MapDirection.RightTop:
+			ret.y += 1;
+			if (!isEvenRow)
+				ret.x += 1;
+			break;
+		case MapDirection.RightBottom:
+			ret.y -= 1;
+			if (!isEvenRow)
+				ret.x += 1;
+			break;
+		default:
+			break;
+		}
+		if (!MapDataManager.Instance.IsValidTileCoord (ret.x, ret.y)) {
+			ret = MapDataManager.InValidMapCoord;
+		}
+		return ret;
+	}
+	#endregion
+
 	Plane mCachedPlane = new Plane(Vector3.up, Vector3.zero);
 	int[] mYCenterIndex = new int[2];
-	int[] mXCenterIndex = new int[2];
 	//TODO 异常点坐标目前不能够过滤出来
 	public IntVector2 ScreenPosToMapCoord(Camera mapCamera, Vector2 screenPos)
 	{
