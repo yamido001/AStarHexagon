@@ -4,12 +4,15 @@ using UnityEngine;
 
 public class AStarManager : SingleInstance<AStarManager> {
 
-
 	class AStarNode
 	{
 		public IntVector2 coord;
-		public float valueG;
-		public float valueH;
+		public int valueG;
+		public int valueH;
+		public int valueF
+		{
+			get{ return valueG + valueH; }
+		}
 		public AStarNode previousNode;
 	}
 
@@ -28,8 +31,8 @@ public class AStarManager : SingleInstance<AStarManager> {
 
 		AStarNode node = new AStarNode ();
 		node.coord = fromCoord;
-		node.valueG = 0f;
-		node.valueH = CalDis(fromCoord, toCoord);
+		node.valueG = 0;
+		node.valueH = CallDisH(fromCoord, toCoord);
 		mOpenList.Add (node);
 
 		AStarNode finallyNode = null;
@@ -45,16 +48,6 @@ public class AStarManager : SingleInstance<AStarManager> {
 			}
 			mOpenList.RemoveAt (0);
 
-//			logSb.Append ("\n" + curNode.coord.ToString() + "  ==>  ");
-//			for (int i = 0; i < mOpenList.Count; ++i) {
-//				logSb.Append (mOpenList [i].coord.ToString () + "\t\t");
-//			}
-//
-//			if (curNode.coord.x == 2 && curNode.coord.y == 0) {
-//				int a = 12;
-//				++a;
-//			}
-
 			int dirCount = MapLayout.Instance.GetNextCoordList (curNode.coord, moveDirectionArray);
 			for (int i = 0; i < dirCount; ++i) {
 				IntVector2 childCoord = moveDirectionArray [i];
@@ -66,10 +59,10 @@ public class AStarManager : SingleInstance<AStarManager> {
 					AStarNode openNode = mOpenList [j];
 					if (openNode.coord == childCoord) {
 						//当前的childCoord已经在了openListh中了
-						if (openNode.valueG > curNode.valueG + MapConst.MapHexagonRadius * MapLayout.sqrt3) {
+						if (openNode.valueG > curNode.valueG + CallDisG(curNode.coord, openNode.coord)) {
 							//openNode的路径值大于了当前节点的路径值和当前点到openNode的路径值的和。代表从当前点连接到openNode是更快捷的路径
 							openNode.previousNode = curNode;
-							openNode.valueG = curNode.valueG + MapConst.MapHexagonRadius * MapLayout.sqrt3;
+							openNode.valueG = curNode.valueG + CallDisG(curNode.coord, openNode.coord);
 						} else {
 							//不需要修改openNode的前节点，当前openNode是快捷的
 						}
@@ -80,19 +73,17 @@ public class AStarManager : SingleInstance<AStarManager> {
 				if (!isChildNodeInOpen && !mCloseSet.Contains(childCoord.GetHashCode())) {
 					AStarNode childNode = new AStarNode ();
 					childNode.previousNode = curNode;
-					childNode.valueG = curNode.valueG + MapConst.MapHexagonRadius * MapLayout.sqrt3;
+					childNode.valueG = curNode.valueG + CallDisG(curNode.coord, childNode.coord);
 					childNode.coord = childCoord;
-					childNode.valueH =  CalDis(childCoord, toCoord);
+					childNode.valueH =  CallDisH(childCoord, toCoord);
 					mOpenList.Add (childNode);
 				}
 			}
 			mOpenList.Sort (delegate(AStarNode x, AStarNode y) {
-				return (x.valueG + x.valueH).CompareTo(y.valueG + y.valueH);
+				return x.valueF.CompareTo(y.valueF);
 			});
 			mCloseSet.Add (curNode.coord.GetHashCode ());
 		}
-
-//		Debug.LogError (logSb.ToString());
 
 		if (null != finallyNode) {
 			List<IntVector2> retList = new List<IntVector2> ();
@@ -106,10 +97,27 @@ public class AStarManager : SingleInstance<AStarManager> {
 		return null;
 	}
 
-	float CalDis(IntVector2 fromCoord, IntVector2 toCoord)
+	/// <summary>
+	/// 相邻两个格子的距离为2
+	/// </summary>
+	/// <returns>The dis h.</returns>
+	/// <param name="fromCoord">From coordinate.</param>
+	/// <param name="toCoord">To coordinate.</param>
+	int CallDisH(IntVector2 fromCoord, IntVector2 toCoord)
 	{
-		Vector2 fromMapPos = MapLayout.Instance.GetTilePos (fromCoord.x, fromCoord.y);
-		Vector2 toMapPos = MapLayout.Instance.GetTilePos (toCoord.x, toCoord.y);
-		return (fromMapPos - toMapPos).sqrMagnitude;
+		IntVector2 offCoord = toCoord - fromCoord;
+		IntVector3 offHexCubeCoord = MapLayout.Instance.TilePosToHexCubePos (offCoord);
+		return (Mathf.Abs (offHexCubeCoord.x) + Mathf.Abs (offHexCubeCoord.y) + Mathf.Abs (offHexCubeCoord.z)) / 2 * 2;
+	}
+
+	/// <summary>
+	/// 连个相邻格子的距离为2
+	/// </summary>
+	/// <returns>The dis g.</returns>
+	/// <param name="fromCoord">From coordinate.</param>
+	/// <param name="toCoord">To coordinate.</param>
+	int CallDisG(IntVector2 fromCoord, IntVector2 toCoord)
+	{
+		return 2;
 	}
 }

@@ -42,6 +42,23 @@ public class MapLayout : SingleInstance<MapLayout>{
 	float mHorizonalSizeHalf = sqrt3 / 2f * MapConst.MapHexagonRadius;
 	float mVerticalVerticalCenterPosDistant = MapConst.MapHexagonRadius * 3 / 2f;
 
+	public IntVector3 TilePosToHexCubePos(IntVector2 tilePos)
+	{
+		IntVector3 ret;
+		ret.x = tilePos.y;
+		ret.z = tilePos.x - (tilePos.y + (tilePos.y & 1)) / 2;
+		ret.y = -ret.x-ret.z;
+		return ret;
+	}
+
+	public IntVector2 HexCubePosToTilePos(IntVector3 hexCubePos)
+	{
+		IntVector2 ret;
+		ret.y = hexCubePos.x;
+		ret.x = hexCubePos.z + (hexCubePos.x + (hexCubePos.x & 1)) / 2;
+		return ret;
+	}
+
 	public Vector3 GetTilePos(int tileX, int tileY) 
 	{
 		int offset = 1;
