@@ -49,8 +49,8 @@ public struct IntVector2{
 	public static IntVector2 operator * (IntVector2 lhs, IntVector2 rhs)
 	{
 		IntVector2 ret = lhs;
-		lhs.x *= rhs.x;
-		lhs.y *= rhs.y;
+		ret.x *= rhs.x;
+		ret.y *= rhs.y;
 		return ret;
 	}
 

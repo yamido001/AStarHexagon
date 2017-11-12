@@ -413,8 +413,10 @@ public class MapLayout : SingleInstance<MapLayout>{
 				}
 			}
 		}
-		retCoord.x = Mathf.Min (retCoord.x, MapConst.MapSize.x);
-		retCoord.y = Mathf.Min (retCoord.y, MapConst.MapSize.y);
+		retCoord.x = Mathf.Min (retCoord.x, MapConst.MapSize.x - 1);
+		retCoord.x = Mathf.Max (0, retCoord.x);
+		retCoord.y = Mathf.Min (retCoord.y, MapConst.MapSize.y - 1);
+		retCoord.y = Mathf.Max (0, retCoord.y);
 		return retCoord;
 	}
 

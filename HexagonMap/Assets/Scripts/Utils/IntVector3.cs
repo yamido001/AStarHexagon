@@ -52,9 +52,9 @@ public struct IntVector3{
 	public static IntVector3 operator * (IntVector3 lhs, IntVector3 rhs)
 	{
 		IntVector3 ret = lhs;
-		lhs.x *= rhs.x;
-		lhs.y *= rhs.y;
-		lhs.z *= rhs.z;
+		ret.x *= rhs.x;
+		ret.y *= rhs.y;
+		ret.z *= rhs.z;
 		return ret;
 	}
 

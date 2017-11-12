@@ -17,7 +17,7 @@ public abstract class MapViewBase : MonoBehaviour {
 	{
 		mCameraCachedTransform = mapCamera.transform;
 		subMapViewTemplate.gameObject.SetActive (false);
-		mInputWrapper = new InputWrapper (OnClick, OnDrag);
+		mInputWrapper = new InputWrapper (OnClick, OnDrag, OnPinching);
 		RefreshVisiableSubMapView ();
 	}
 
@@ -115,6 +115,21 @@ public abstract class MapViewBase : MonoBehaviour {
 	}
 	#endregion
 
+	#region 摄像机管理
+	float CameraHeight
+	{
+		get{
+			return mapCamera.transform.position.y;
+		}
+		set{
+			Vector3 cameraPos = mapCamera.transform.position;
+			cameraPos.y = value;
+			mapCamera.transform.position = cameraPos;
+			OnCameraMove ();
+		}
+	}
+	#endregion
+
 	#region 输入操作
 	void OnClick(Vector2 clickPos)
 	{
@@ -127,6 +142,14 @@ public abstract class MapViewBase : MonoBehaviour {
 		Vector3 curHitPos = MapLayout.Instance.ScreenPosToMapPos(mapCamera, curPos);
 		Vector3 lastHitPos = MapLayout.Instance.ScreenPosToMapPos(mapCamera, curPos - deltaPos);
 		MoveCameraOffset (lastHitPos - curHitPos);
+	}
+
+	void OnPinching(Vector2 curPos1, Vector2 deltaPos1, Vector2 curPos2, Vector2 deltaPos2)
+	{
+		float curDis = (curPos1 - curPos2).magnitude;
+		float previousDis = ((curPos1 - deltaPos1) - (curPos2 - deltaPos2)).magnitude;
+		float rate = (curDis - previousDis) / previousDis;
+		CameraHeight = CameraHeight * (1 + rate);
 	}
 	#endregion
 

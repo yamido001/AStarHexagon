@@ -69,17 +69,19 @@ public class MapView : MapViewBase {
 		   MapDataManager.Instance.IsValidTileCoord (mFindPathEnd.x, mFindPathEnd.y)) {
 			if (GUILayout.Button ("寻路")) {
 				mState = FindPathState.Finding;
-				List<IntVector2> findPathList = AStarManager.Instance.FindPath (mFindPathStart, mFindPathEnd);
-				if (null != findPathList) {
-					System.Text.StringBuilder pathSb = new System.Text.StringBuilder ();
-					for (int i = 0; i < findPathList.Count; ++i) {
-						pathSb.Append (findPathList [i].ToString ());
-						if (i != findPathList.Count - 1)
-							pathSb.Append ("->");
+				using (new PerformTimer ("寻找路径")) {
+					List<IntVector2> findPathList = AStarManager.Instance.FindPath (mFindPathStart, mFindPathEnd);
+					if (null != findPathList) {
+						System.Text.StringBuilder pathSb = new System.Text.StringBuilder ();
+						for (int i = 0; i < findPathList.Count; ++i) {
+							pathSb.Append (findPathList [i].ToString ());
+							if (i != findPathList.Count - 1)
+								pathSb.Append ("->");
+						}
+						ShowPath (findPathList);
+					} else {
+						Debug.LogError ("未找到从 " + mFindPathStart.ToString() + " 到 " + mFindPathEnd.ToString() + " 的路径");
 					}
-					ShowPath (findPathList);
-				} else {
-					Debug.LogError ("未找到从 " + mFindPathStart.ToString() + " 到 " + mFindPathEnd.ToString() + " 的路径");
 				}
 			}
 		}

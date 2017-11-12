@@ -18,7 +18,7 @@ public class MapDataManager : SingleInstance<MapDataManager>{
 	public void LoadConfigData()
 	{
 		TextAsset mapAsset = Resources.Load<TextAsset> (mapDataPath);
-		if (null != 	mapAsset) {
+		if (null != mapAsset) {
 			byte[] mapBytes = mapAsset.bytes;
 
 			for (int i = 0; i < mTileConfigDatas.GetLength(0); ++i) {

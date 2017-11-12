@@ -6,9 +6,11 @@ public class InputWrapper{
 
 	ClickGesture mClickGesture;
 	DragGesture mDragGesture;
+	PinchGesture mPinchGesture;
 	IInputDevice mInput = null;
 
-	public InputWrapper(System.Action<Vector2> ClickHandler, System.Action<Vector2, Vector2> DragingHandler)
+	public InputWrapper(System.Action<Vector2> ClickHandler, System.Action<Vector2, Vector2> DragingHandler
+						, System.Action<Vector2, Vector2, Vector2, Vector2> PinchingHandler)
 	{
 		mInput = new MouseInputDevice ();
 		if (null != ClickHandler) {
@@ -19,6 +21,10 @@ public class InputWrapper{
 			mDragGesture = new DragGesture (mInput);
 			mDragGesture.dragingHandler = DragingHandler;
 		}
+		if (null != PinchingHandler) {
+			mPinchGesture = new PinchGesture (mInput);
+			mPinchGesture.pinchHandler = PinchingHandler;
+		}
 	}
 
 	public void Update()
@@ -28,5 +34,7 @@ public class InputWrapper{
 			mClickGesture.Update ();
 		if (null != mDragGesture)
 			mDragGesture.Update ();
+		if (null != mPinchGesture)
+			mPinchGesture.Update ();
 	}
 }

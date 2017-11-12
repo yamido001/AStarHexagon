@@ -33,7 +33,7 @@ public class ClickGesture : BaseGesture {
 	{
 		if (mInput.GetTouchCount () == 1) {
 			mState = ClickState.TouchDown;
-			mTouchedPos = mInput.GetTouchPos ();
+			mTouchedPos = mInput.GetTouchPos (0);
 		}
 	}
 
@@ -41,7 +41,7 @@ public class ClickGesture : BaseGesture {
 	{
 		if (mInput.GetTouchCount () == 0) {
 			mState = ClickState.Idle;
-			Vector2 touchPos = mInput.GetTouchPos ();
+			Vector2 touchPos = mInput.GetTouchPos (0);
 			if ((touchPos - mTouchedPos).magnitude < MinDragDis) {
 				clickHandler.Invoke (touchPos);
 			}

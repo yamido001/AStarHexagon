@@ -7,6 +7,7 @@ public class SubMapView : MonoBehaviour {
 	Dictionary<int, MapTileBase> mTileDic = new Dictionary<int, MapTileBase> ();
 	int mBlockId = MapConst.EmptyBlockId;
 	IntVector2 mZeroCoord;
+	IntVector2 mBlockCoord;
 	Terrain mTerrain;
 	MeshFilter mGridMeshFilter;
 	Transform mCacheTransform;
@@ -52,11 +53,11 @@ public class SubMapView : MonoBehaviour {
 			return;
 		mBlockId = blockId;
 
-		IntVector2 blockCoord = MapDataManager.BlockIdToBlockZeroTileCoord (mBlockId);
+		mBlockCoord = MapDataManager.BlockIdToBlockCoord (mBlockId);
 		mZeroCoord = MapDataManager.BlockIdToBlockZeroTileCoord (mBlockId);
-		gameObject.name = blockCoord.ToString ();
+		gameObject.name = mBlockCoord.ToString ();
 	
-		transform.localPosition = MapLayout.Instance.GetBlockPos(blockCoord.x, blockCoord.y);
+		transform.localPosition = MapLayout.Instance.GetBlockPos(mBlockCoord.x, mBlockCoord.y);
 
 		DestroyBackground ();
 		InitBackground ();
@@ -82,8 +83,8 @@ public class SubMapView : MonoBehaviour {
 
 	void InitTiles()
 	{
-		for (int i = 0; i < MapConst.MapBlockSize.x + mZeroCoord.x; ++i) {
-			for (int j = 0; j < MapConst.MapBlockSize.y + mZeroCoord.y; ++j) {
+		for (int i = mZeroCoord.x; i < MapConst.MapBlockSize.x + mZeroCoord.x; ++i) {
+			for (int j = mZeroCoord.y; j < MapConst.MapBlockSize.y + mZeroCoord.y; ++j) {
 				InitTile (i, j);
 			}
 		}
@@ -135,8 +136,11 @@ public class SubMapView : MonoBehaviour {
 	void InitBackground()
 	{
 		//创建地图背景
-		string resourcePath = "Map/Prefab/Terrain/" + MapConst.GetSubMapViewBgName (mZeroCoord.x, mZeroCoord.y, false);
+		string resourcePath = "Map/Prefab/Terrain/" + MapConst.GetSubMapViewBgName (mBlockCoord.x, mBlockCoord.y, false);
 		GameObject obj = Resources.Load<GameObject>(resourcePath);
+		if (null == obj) {
+			Debug.LogError ("没有找到对应的资源 " + resourcePath);
+		}
 		GameObject bgObject = GameObject.Instantiate (obj);
 		bgObject.transform.SetParent (transform);
 		bgObject.transform.localPosition = Vector3.zero;

@@ -39,7 +39,7 @@ public class MapTileBlock : MapTileBase{
 			mModelObj = GameObject.Instantiate (prefab);
 			Vector3 mapPos = MapLayout.Instance.GetTilePos (configBlock.tileCoord.x, configBlock.tileCoord.y);
 			mModelObj.transform.SetParent (mViewTf);
-			mModelObj.transform.ResetAndToPos (mapPos);
+			mModelObj.transform.ResetAndToWorldPos (mapPos);
 			mModelObj.name = configBlock.tileCoord.ToString ();
 		}
 	}

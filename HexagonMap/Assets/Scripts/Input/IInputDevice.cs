@@ -5,6 +5,6 @@ using UnityEngine;
 public interface IInputDevice
 {
 	int GetTouchCount();
-	Vector2 GetTouchPos();
+	Vector2 GetTouchPos(int index);
 	void Update();
 }

@@ -39,7 +39,7 @@ public class DragGesture : BaseGesture {
 	void UpdateIdle()
 	{
 		if (mInput.GetTouchCount () == 1) {
-			mTouchDownPos = mInput.GetTouchPos ();
+			mTouchDownPos = mInput.GetTouchPos (0);
 			mDragState = DragState.TouchDown;
 		}
 	}
@@ -47,7 +47,7 @@ public class DragGesture : BaseGesture {
 	void UpdateTouchDown()
 	{
 		if (mInput.GetTouchCount () == 1) {
-			Vector2 touchPos = mInput.GetTouchPos ();
+			Vector2 touchPos = mInput.GetTouchPos (0);
 			if ((mTouchDownPos - touchPos).sqrMagnitude > MinDragDis) {
 				mTouchDownPos = touchPos;
 				mDragState = DragState.Draging;
@@ -61,14 +61,14 @@ public class DragGesture : BaseGesture {
 	{
 		if (mInput.GetTouchCount () == 1) {
 			if (dragingHandler != null) {
-				Vector2 touchPos = mInput.GetTouchPos ();
+				Vector2 touchPos = mInput.GetTouchPos (0);
 				dragingHandler.Invoke (touchPos, touchPos - mTouchDownPos);
 				mTouchDownPos = touchPos;
 			}
 		} else {
 			mDragState = DragState.Idle;
 			if (endDragHandler != null)
-				endDragHandler.Invoke (mInput.GetTouchPos ());
+				endDragHandler.Invoke (mInput.GetTouchPos (0));
 		}
 	}
 }
