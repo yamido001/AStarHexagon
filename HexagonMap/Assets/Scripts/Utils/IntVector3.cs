@@ -40,6 +40,15 @@ public struct IntVector3{
 		return this == other;
 	}
 
+	public static IntVector3 operator + (IntVector3 lhs, IntVector3 rhs)
+	{
+		IntVector3 ret = lhs;
+		ret.x += rhs.x;
+		ret.y += rhs.y;
+		ret.z += rhs.z;
+		return ret;
+	}
+
 	public static IntVector3 operator / (IntVector3 lhs, IntVector3 rhs)
 	{
 		IntVector3 ret = lhs;

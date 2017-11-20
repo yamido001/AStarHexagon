@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class MapConst {
-	public static IntVector2 MapSize = new IntVector2 (64, 64);
+	public static IntVector2 MapSize = new IntVector2 (512, 512);
 	public static IntVector2 MapBlockSize = new IntVector2(16, 16);		//地图上每一个子地块的Tile点的数量
 	public static int MapTileSiz = 10;	//地图上每一个tile点的大小
 	public static int MapHexagonRadius = 6;

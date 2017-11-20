@@ -115,21 +115,6 @@ public abstract class MapViewBase : MonoBehaviour {
 	}
 	#endregion
 
-	#region 摄像机管理
-	float CameraHeight
-	{
-		get{
-			return mapCamera.transform.position.y;
-		}
-		set{
-			Vector3 cameraPos = mapCamera.transform.position;
-			cameraPos.y = value;
-			mapCamera.transform.position = cameraPos;
-			OnCameraMove ();
-		}
-	}
-	#endregion
-
 	#region 输入操作
 	void OnClick(Vector2 clickPos)
 	{
@@ -154,7 +139,21 @@ public abstract class MapViewBase : MonoBehaviour {
 	#endregion
 
 	#region 摄像机操作
-	void MoveCameraOffset(Vector3 offsetPos)
+	float CameraHeight
+	{
+		get{
+			return mapCamera.transform.position.y;
+		}
+		set{
+			Vector3 cameraPos = mapCamera.transform.position;
+			Vector3 originFouceMapPos = MapLayout.Instance.ScreenPosToMapPos (mapCamera, new Vector2(Screen.width / 2f, Screen.height / 2f));
+			cameraPos.y = value;
+			mapCamera.transform.position = cameraPos;
+			mapCamera.transform.LookAt (originFouceMapPos);
+			OnCameraMove ();
+		}
+	}
+	protected void MoveCameraOffset(Vector3 offsetPos)
 	{
 		mCameraCachedTransform.position += offsetPos;
 		OnCameraMove ();

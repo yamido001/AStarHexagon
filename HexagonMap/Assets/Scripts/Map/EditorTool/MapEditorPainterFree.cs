@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class MapEditorPainterFree : MapEditorPainter {
 
-	public MapEditorPainterFree() : base(0.1f){}
+	public MapEditorPainterFree() : base(0.1f, 5){}
 
 	public override void RunGUI ()
 	{

@@ -43,6 +43,10 @@ public class MapView : MapViewBase {
 		}
 	}
 
+	void OnGUI(){
+		MoveToCoordOnGUI ();
+		FindPathOnGUI ();
+	}
 
 	#region 寻路操作
 	enum FindPathState
@@ -57,7 +61,7 @@ public class MapView : MapViewBase {
 	FindPathState mState;
 
 
-	void OnGUI()
+	void FindPathOnGUI()
 	{
 		if (GUILayout.Button ("选择起点")) {
 			mState = FindPathState.SelectStart;
@@ -129,6 +133,31 @@ public class MapView : MapViewBase {
 	{
 		node.SetActive (false);
 		mPathNodeCached.Enqueue (node);
+	}
+	#endregion
+
+	#region 位置跳转逻辑
+	int mMoveToX;
+	int mMoveToY;
+	void MoveToCoordOnGUI()
+	{
+		GUILayout.Label ("输入跳转坐标");
+		string moveXStr = GUILayout.TextField (mMoveToX.ToString()); 
+		string moveYStr = GUILayout.TextField (mMoveToY.ToString());
+		int.TryParse (moveXStr, out mMoveToX);
+		int.TryParse (moveYStr, out mMoveToY);
+		if (GUILayout.Button ("跳转")) {
+			IntVector2 tileCoord = new IntVector2 (mMoveToX, mMoveToY);
+			if (MapDataManager.Instance.IsValidTileCoord (tileCoord.x, tileCoord.y)) {
+				MoveToCoord (tileCoord);
+			}
+		}
+	}
+	void MoveToCoord(IntVector2 tileCoord)
+	{
+		Vector3 curFouceMapPos = MapLayout.Instance.ScreenPosToMapPos (mapCamera, new Vector2 (Screen.width / 2f, Screen.height / 2f));
+		Vector3 moveToCoordMapPos = MapLayout.Instance.GetTilePos (tileCoord.x, tileCoord.y);
+		MoveCameraOffset (moveToCoordMapPos - curFouceMapPos);
 	}
 	#endregion
 }

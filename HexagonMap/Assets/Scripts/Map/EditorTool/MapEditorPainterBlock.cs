@@ -9,7 +9,7 @@ public class MapEditorPainterBlock : MapEditorPainter {
 	int[] mModelIntArray;
 	string[] mModelStrArray;
 
-	public MapEditorPainterBlock() : base(0.1f){
+	public MapEditorPainterBlock() : base(0.1f, 5){
 		var modelKeyList = MapPrefabDefine.GetBlockModelKeyList ();
 		mModelIntArray = new int[modelKeyList.Count];
 		mModelStrArray = new string[mModelIntArray.Length + 1];
@@ -24,8 +24,10 @@ public class MapEditorPainterBlock : MapEditorPainter {
 	public override void RunGUI ()
 	{
 		base.RunGUI ();
-
+		GUILayout.BeginHorizontal ();
+		GUILayout.Label ("选择阻挡点类型");
 		mModelIndex = GUILayout.SelectionGrid (mModelIndex, mModelStrArray, mModelStrArray.Length);
+		GUILayout.EndHorizontal ();
 	}
 
 	protected override void DoDraw (IntVector2 pos)

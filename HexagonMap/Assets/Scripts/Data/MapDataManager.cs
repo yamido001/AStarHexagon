@@ -83,10 +83,12 @@ public class MapDataManager : SingleInstance<MapDataManager>{
 	int ReadIntFromByte(byte[] bytes, int index)
 	{
 		int ret = 0;
-		ret |= bytes [index] >> 24;
-		ret |= bytes [index + 1] >> 16;
-		ret |= bytes [index + 2] >> 8;
-		ret |= bytes [index + 3];
+		if (bytes.Length > index + 3) {
+			ret |= bytes [index] >> 24;
+			ret |= bytes [index + 1] >> 16;
+			ret |= bytes [index + 2] >> 8;
+			ret |= bytes [index + 3];
+		}
 		return ret;
 	}
 

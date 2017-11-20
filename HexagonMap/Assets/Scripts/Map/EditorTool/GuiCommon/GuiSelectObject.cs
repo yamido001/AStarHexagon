@@ -42,5 +42,13 @@ public class GuiSelectObject{
 			mActionDic [key].RunGUI ();
 		}
 	}
+
+	public void ForeachObject(System.Action<GuiObject> foreachObj)
+	{
+		var actionDicEnum = mActionDic.GetEnumerator ();
+		while (actionDicEnum.MoveNext ()) {
+			foreachObj.Invoke (actionDicEnum.Current.Value);
+		}
+	}
 }
 #endif

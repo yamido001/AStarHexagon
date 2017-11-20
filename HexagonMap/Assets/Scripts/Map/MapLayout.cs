@@ -298,6 +298,34 @@ public class MapLayout : SingleInstance<MapLayout>{
 	}
 	#endregion
 
+	#region 找到周围圈的点
+	public List<IntVector2> GetRingCoordList(IntVector2 coord, int ringCount, List<IntVector2> fillList = null)
+	{
+		List<IntVector2> ret = fillList != null ? fillList : new List<IntVector2> ();
+		IntVector3 hexCubePos = TilePosToHexCubePos (coord);
+		//HexCube坐标系  dx + dy + dz = 0;
+		//在ringN圈内的点必须满足条件 abs(dx) <= ringN  abs(dy) <= ringN  abs(dz) <= ringN
+		//因此应该是嵌套遍历三个坐标值，foreach(x , -ringN,ringN) foreach(y , -ringN,ringN) foreach(z , -ringN,ringN) ,并且(dx + dy + dz == 0)
+		//因为dx + dy + dz = 0;
+		//所以dz = -dx - dy;    -ringN <= -dx - dy <= ringN
+		// -dx - ringN <= dy <= ringN - dx
+		//所以只需要判断dx和dy即可，只要满足条件
+		// -ringN <= dx <= ringN && -ringN <= dy <= ringN && -dx - ringN <= dy <= ringN - dx
+		// -ringN <= dx <= ringN && max(-ringN, -dx - ringN) <= dy <= min(ringN, ringN - dx)
+		ringCount -= 1;
+		//for (int ring = 0; ring <= ringCount; ++ring) {
+			for (int dx = -ringCount; dx <= ringCount; ++dx) {
+				for(int dy = Mathf.Max (-ringCount, -dx - ringCount); dy <= Mathf.Min(ringCount, -dx + ringCount); ++dy){
+					int dz = -dx - dy;
+					IntVector2 tilePos = HexCubePosToTilePos (new IntVector3 (dx, dy, dz) + hexCubePos);
+					ret.Add (tilePos);
+				}
+			}
+		//}
+		return ret;
+	}
+	#endregion
+
 	Plane mCachedPlane = new Plane(Vector3.up, Vector3.zero);
 	int[] mYCenterIndex = new int[2];
 	//TODO 异常点坐标目前不能够过滤出来
